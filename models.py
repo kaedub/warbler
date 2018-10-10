@@ -26,6 +26,23 @@ class FollowersFollowee(db.Model):
         primary_key=True,
     )
 
+class Like(db.Model):
+    """Represents likes by connecting a user to a message that they liked"""
+
+    __tablename__ = 'likes'
+
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey('users.id', ondelete="cascade"),
+        primary_key=True,
+    )
+
+    message_id = db.Column(
+        db.Integer,
+        db.ForeignKey('messages.id', ondelete="cascade"),
+        primary_key=True,
+    )
+
 
 class User(db.Model):
     """User in the system."""
@@ -82,6 +99,12 @@ class User(db.Model):
         backref=db.backref('following', lazy='dynamic'),
         lazy='dynamic')
 
+    # SHOW WHAT USER HAS LIKED
+    likes = db.relationship(
+        "Like",
+        backref="users"
+    )
+
     def __repr__(self):
         return f"<User #{self.id}: {self.username}, {self.email}>"
 
@@ -105,7 +128,7 @@ class User(db.Model):
         hashed_pwd = bcrypt.generate_password_hash(password).decode('UTF-8')
 
         user = User(
-            username=username,
+            username=username.lower(),
             email=email,
             password=hashed_pwd,
             image_url=image_url,
@@ -125,7 +148,7 @@ class User(db.Model):
         If can't find matching user (or if password is wrong), returns False.
         """
 
-        user = cls.query.filter_by(username=username).first()
+        user = cls.query.filter_by(username=username.lower()).first()
 
         if user:
             is_auth = bcrypt.check_password_hash(user.password, password)

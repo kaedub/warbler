@@ -4,7 +4,7 @@ from flask import Flask, render_template, request, flash, redirect, session, g
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 import os
-from forms import UserAddForm, LoginForm, MessageForm
+from forms import UserAddForm, UserEditForm, LoginForm, MessageForm
 from models import db, connect_db, User, Message
 
 CURR_USER_KEY = "curr_user"
@@ -24,6 +24,10 @@ toolbar = DebugToolbarExtension(app)
 
 connect_db(app)
 
+
+######################
+# TODO
+# - stylize flash messages on login page
 
 ##############################################################################
 # User signup/login/logout
@@ -45,12 +49,14 @@ def do_login(user):
 
     session[CURR_USER_KEY] = user.id
 
-
 def do_logout():
     """Logout user."""
 
+
     if CURR_USER_KEY in session:
         del session[CURR_USER_KEY]
+
+
 
 
 @app.route('/signup', methods=["GET", "POST"])
@@ -113,7 +119,23 @@ def login():
 def logout():
     """Handle logout of user."""
 
-    # IMPLEMENT THIS
+    do_logout()
+    flash("Logged out", "success")
+    return redirect('/login')
+
+
+def is_authorized(user_id):
+    """Check that user is authorized"""
+
+    if CURR_USER_KEY not in session:
+        flash("You must be logged in.", "warning")
+        return False
+    else:
+        if user_id == session.get(CURR_USER_KEY):
+            return True
+        else:
+            flash("You are not authorized to edit other users.", "danger")
+            return False
 
 
 ##############################################################################
@@ -202,8 +224,30 @@ def stop_following(follow_id):
 def profile():
     """Update profile for current user."""
 
-    # IMPLEMENT THIS
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/login")
+    
+    form = UserEditForm(obj=g.user)
 
+    if form.validate_on_submit():
+        password = form.data.get('password')
+        user = User.authenticate(g.user.username,
+                                form.data['password'])
+
+        if not user:
+            flash("Incorrect Password", "warning")
+            return redirect('/')
+
+        user.username = form.data.get('username')
+        user.email = form.data.get('email')
+        user.image_url = form.data.get('image_url')
+        user.header_image_url = form.data.get('header_image_url')
+        user.bio = form.data.get('bio')
+        db.session.commit()
+        return redirect(f'/users/{user.id}')
+
+    return render_template('/users/edit.html', form=form, user_id=g.user.id)
 
 @app.route('/users/delete', methods=["POST"])
 def delete_user():
@@ -269,6 +313,25 @@ def messages_destroy(message_id):
 
     return redirect(f"/users/{g.user.id}")
 
+##############################################################################
+# Handle Likes etc.
+
+@app.route('/like', methods=['POST'])
+def add_like():
+    """Adds a like to the database associated with the users id"""
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    
+    # NEED TO GET MESSAGE ID
+    message_id = request.form.get('message_id')
+    g.user.likes.append(message_id)
+    import pdb; pdb.set_trace()
+    db.session.commit()
+
+    return jsonify({'response': 'You liked that!'})
+
 
 ##############################################################################
 # Homepage and error pages
@@ -287,6 +350,7 @@ def homepage():
 
         messages = (Message
                     .query
+                    .filter(Message.user_id.in_(following_ids))
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
@@ -320,3 +384,4 @@ def add_header(req):
     req.headers["Expires"] = "0"
     req.headers['Cache-Control'] = 'public, max-age=0'
     return req
+

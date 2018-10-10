@@ -515,7 +515,12 @@ p.card-bio {
   margin-bottom: 10px;
 }
 
+#interactions a {
+  text-decoration: none;
+}
+
 /* ================================ 404 page */
+
 
 .message-404 {
   color: white;
