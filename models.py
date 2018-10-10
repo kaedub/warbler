@@ -100,10 +100,10 @@ class User(db.Model):
         lazy='dynamic')
 
     # SHOW WHAT USER HAS LIKED
-    likes = db.relationship(
-        "Like",
-        backref="users"
-    )
+    messages_liked = db.relationship(
+        "Message",
+        secondary="likes",
+        backref="who_liked")
 
     def __repr__(self):
         return f"<User #{self.id}: {self.username}, {self.email}>"

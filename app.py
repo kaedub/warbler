@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, render_template, request, flash, redirect, session, g
+from flask import Flask, render_template, request, flash, redirect, session, g, jsonify
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 import os
@@ -326,8 +326,25 @@ def add_like():
     
     # NEED TO GET MESSAGE ID
     message_id = request.form.get('message_id')
-    g.user.likes.append(message_id)
-    import pdb; pdb.set_trace()
+    message = Message.query.get(message_id)
+    g.user.messages_liked.append(message)
+
+    db.session.commit()
+
+    return jsonify({'response': 'You liked that!'})
+
+@app.route('/like', methods=['DELETE'])
+def remove_like():
+    """Remove a like to the database associated with the users id"""
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    
+    # NEED TO GET MESSAGE ID
+    message_id = request.form.get('message_id')
+    message = Message.query.get(message_id)
+    g.user.messages_liked.remove(message)
     db.session.commit()
 
     return jsonify({'response': 'You liked that!'})

@@ -51,7 +51,7 @@
                 <span class="text-muted">{{ msg.timestamp.strftime('%d %B %Y') }}</span>
                 <p>{{ msg.text }}</p>
                 <div class="row" id="interactions">
-                  <a id="{{msg.id}}" href="#" class="far fa-star"></a>
+                  <a id="{{msg.id}}" href="#" class="{% if msg not in g.user.messages_liked %}far {% else %}fas {% endif %}fa-star"></a>
                 </div>
               </div>
           </li>
