@@ -125,7 +125,7 @@ class UserViewTestCase(TestCase):
 
 
     def test_show_following(self):
-        """Test /usrs/user_id/following route shows who user is following"""
+        """Test /users/user_id/following route shows who user is following"""
 
         edward = User(
             id=1,
@@ -183,7 +183,7 @@ class UserViewTestCase(TestCase):
             self.assertIn(b'Unfollow</button>', resp.data)
 
     def test_users_followers(self):
-        """Test /usrs/user_id/followers route show who is following user"""
+        """Test /users/user_id/followers route show who is following user"""
 
         edward = User(
             id=1,
@@ -238,7 +238,80 @@ class UserViewTestCase(TestCase):
             self.assertIn(b'@timmy', resp.data)
 
     def users_likes(self):
-        pass
+        """Test the /users/user_id/likes page"""
+
+        edward = User(
+            id=1,
+            email="ed@test.com",
+            username="edward",
+            password="HASHED_PASSWORD",
+            location="Oakland"
+        )
+
+        juan = User(
+            id=2,
+            email="juanton@test.com",
+            username="juan",
+            password="HASHED_PASSWORD",
+            location="New York"
+        )
+
+        timmy = User(
+            id=3,
+            email="tim@test.com",
+            username="timmy",
+            password="HASHED_PASSWORD",
+            location="Antarctica"
+        )
+
+        db.session.add(edward)
+        db.session.add(juan)
+        db.session.add(timmy)
+        db.session.commit()
+
+        # POSTED BY EDWARD
+        edwards_message = Message(
+            id=1,
+            text="test message 1",
+            user_id=1
+        )
+
+        # POSTED BY TIMMY
+        timmys_message = Message(
+            id=2,
+            text="test message 2",
+            user_id=3
+        )
+
+        db.session.add(edwards_message)
+        db.session.add(timmys_message)
+        db.session.commit()
+
+        # LETS LIKE SOME THINGS
+        # EDWARD LIKES TIMMYS POST
+        edward.likes.all().append(Message.query.get(2))
+
+        # JUAN LIKES EDWARDS POST
+        juan.likes.all().append(Message.query.get(1))
+
+        with self.client as c:
+
+            # Let's make sure our session knows we are test user "edward"
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = 1
+
+            # View edwards followers
+            resp = c.get('/users/1/likes')
+            
+            self.assertEqual(resp.status_code, 200)
+
+            #test list group items of liked posts on page
+            self.assertNotIn(b'@juan', resp.data)
+            self.assertIn(b'@timmy', resp.data)
+
+            # check that only solid stars
+            self.assertIn(b'class="fa-star fas', resp.data)
+            self.assertNotIn(b'class="fa-star fas', resp.data)
 
     def test_add_follow(self):
         pass
