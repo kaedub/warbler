@@ -44,6 +44,8 @@ class UserModelTestCase(TestCase):
         # self.client = app.test_client()
 
     def tearDown(self):
+        """Removes all data from database tables"""
+
         User.query.delete()
         Message.query.delete()
         FollowersFollowee.query.delete()
