@@ -125,7 +125,7 @@ class UserViewTestCase(TestCase):
 
 
     def test_show_following(self):
-        """Test /usrs/user_id/followers route shows who user is following"""
+        """Test /usrs/user_id/following route shows who user is following"""
 
         edward = User(
             id=1,
@@ -183,7 +183,59 @@ class UserViewTestCase(TestCase):
             self.assertIn(b'Unfollow</button>', resp.data)
 
     def test_users_followers(self):
-        pass
+        """Test /usrs/user_id/followers route show who is following user"""
+
+        edward = User(
+            id=1,
+            email="ed@test.com",
+            username="edward",
+            password="HASHED_PASSWORD",
+            location="Oakland"
+        )
+
+        juan = User(
+            id=2,
+            email="juanton@test.com",
+            username="juan",
+            password="HASHED_PASSWORD",
+            location="New York"
+        )
+
+        timmy = User(
+            id=3,
+            email="tim@test.com",
+            username="timmy",
+            password="HASHED_PASSWORD",
+            location="Antarctica"
+        )        
+
+        db.session.add(edward)
+        db.session.add(juan)
+        db.session.add(timmy)
+        db.session.commit()
+
+        timmy.following.append(edward)
+        db.session.commit()
+
+        with self.client as c:
+
+            # Let's make sure our session knows we are test user "edward"
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = 1
+
+            # View edwards followers
+            resp = c.get('/users/1/followers')
+            
+            self.assertEqual(resp.status_code, 200)
+
+            # test username under profile pic on left but not a
+            # following card
+            self.assertIn(b'@edward</h4>', resp.data)
+            self.assertNotIn(b'@edward</a>', resp.data)
+
+            #test cards of followers
+            self.assertNotIn(b'@juan', resp.data)
+            self.assertIn(b'@timmy', resp.data)
 
     def users_likes(self):
         pass
