@@ -1,5 +1,5 @@
 $(document).ready(function() {
-    $('#messages').on('click', 'a', function(evt) {
+    $('#messages').on('click', '.fa-star', function(evt) {
         evt.preventDefault();
         let $clicked = $(evt.target);
 
