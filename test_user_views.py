@@ -237,7 +237,7 @@ class UserViewTestCase(TestCase):
             self.assertNotIn(b'@juan', resp.data)
             self.assertIn(b'@timmy', resp.data)
 
-    def users_likes(self):
+    def test_users_likes(self):
         """Test the /users/user_id/likes page"""
 
         edward = User(
@@ -289,10 +289,12 @@ class UserViewTestCase(TestCase):
 
         # LETS LIKE SOME THINGS
         # EDWARD LIKES TIMMYS POST
-        edward.likes.all().append(Message.query.get(2))
+        edward.messages_liked.append(Message.query.get(2))
 
         # JUAN LIKES EDWARDS POST
-        juan.likes.all().append(Message.query.get(1))
+        juan.messages_liked.append(Message.query.get(1))
+
+        db.session.commit()
 
         with self.client as c:
 
@@ -310,8 +312,8 @@ class UserViewTestCase(TestCase):
             self.assertIn(b'@timmy', resp.data)
 
             # check that only solid stars
-            self.assertIn(b'class="fa-star fas', resp.data)
-            self.assertNotIn(b'class="fa-star fas', resp.data)
+            self.assertIn(b'class="fas fa-star', resp.data)
+            self.assertNotIn(b'class="far fa-star', resp.data)
 
     def test_add_follow(self):
         pass
