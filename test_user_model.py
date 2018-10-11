@@ -139,17 +139,37 @@ class UserModelTestCase(TestCase):
     def test_get_number_of_likes(self):
         """Test the get_number_of_likes User method"""
         
-        u = User(
+        user1 = User(
             id=1,
             email="test@test.com",
             username="testuser",
             password="HASHED_PASSWORD"
         )
 
-        # db.session.add(user1)
-        # db.session.commit()
+        user2 = User(
+            id=2,
+            email="test2@test.com",
+            username="testuser2",
+            password="HASHED_PASSWORD"
+        )
 
-        self.assertEqual(u.get_number_of_likes(), 0)
+        msg = Message(
+            id=1,
+            text="testuser message here",
+            user_id=1
+        )
+
+        db.session.add(user1)
+        db.session.add(user2)
+        db.session.add(msg)
+        db.session.commit()
+
+        user2.messages_liked.append(msg)
+
+        db.session.commit()
+
+        self.assertEqual(user2.get_number_of_likes(), 1)
+        self.assertEqual(user1.get_number_of_likes(), 0)
 
 
     def test_signup(self):
