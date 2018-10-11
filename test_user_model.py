@@ -124,7 +124,12 @@ class UserModelTestCase(TestCase):
         db.session.add(user2)
         db.session.commit()
 
-        self.assertFalse(user1.is_following(user2))
+        user1.following.append(user2)
+        user2.following.append(user1)
+        db.session.commit()
+
+        self.assertTrue(user1.is_following(user2))
+        self.assertTrue(user2.is_following(user1))
         
 
     def test_get_number_of_likes(self):
