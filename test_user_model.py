@@ -100,7 +100,11 @@ class UserModelTestCase(TestCase):
         db.session.add(user2)
         db.session.commit()
 
+        user1.following.append(user2)
+        db.session.commit()       
+
         self.assertFalse(user1.is_followed_by(user2))
+        self.assertTrue(user2.is_followed_by(user1))
 
 
     def test_is_following(self):
