@@ -125,7 +125,62 @@ class UserViewTestCase(TestCase):
 
 
     def test_show_following(self):
-        pass
+        """Test /usrs/user_id/followers route shows who user is following"""
+
+        edward = User(
+            id=1,
+            email="ed@test.com",
+            username="edward",
+            password="HASHED_PASSWORD",
+            location="Oakland"
+        )
+
+        juan = User(
+            id=2,
+            email="juanton@test.com",
+            username="juan",
+            password="HASHED_PASSWORD",
+            location="New York"
+        )
+
+        timmy = User(
+            id=3,
+            email="tim@test.com",
+            username="timmy",
+            password="HASHED_PASSWORD",
+            location="Antarctica"
+        )        
+
+        db.session.add(edward)
+        db.session.add(juan)
+        db.session.add(timmy)
+        db.session.commit()
+
+        # LETS SEE IF EDWARD FOLLOWS JUAN THAT FOLLOW/UNFOLLOW
+        # BUTTON IS RIGHT
+        edward.following.append(juan)
+        db.session.commit()
+
+        with self.client as c:
+
+            # Let's make sure our session knows we are test user "edward"
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = 1
+
+            # View who edward is following
+            resp = c.get('/users/1/following')
+            
+            self.assertEqual(resp.status_code, 200)
+
+            # test username under profile pic on left but not a
+            # following card
+            self.assertIn(b'@edward</h4>', resp.data)
+            self.assertNotIn(b'@edward</a>', resp.data)
+
+            #test follower cards
+            self.assertIn(b'@juan', resp.data)
+            self.assertNotIn(b'@timmy</a>', resp.data)  
+            self.assertIn(b'Unfollow</button>', resp.data)
 
     def test_users_followers(self):
         pass
