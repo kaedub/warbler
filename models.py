@@ -121,6 +121,7 @@ class User(db.Model):
     # this will run a sql query with each call
     # use a count query instead
     def get_number_of_likes(self):
+        """Return the number of messages this user has liked."""
         return len(self.messages_liked)
 
     @classmethod
