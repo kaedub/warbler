@@ -181,15 +181,16 @@ class UserModelTestCase(TestCase):
             password="noobstyle"
         )
 
-        # db.session.commit()
+        db.session.commit()
 
+        # tests that signup returns a user instance
         self.assertIsInstance(new_user, User)
 
-        # self.assertEqual(new_user, User.query.get(3))
+        u = User.query.filter_by(username="newbuser").first()
 
-        self.assertEqual(new_user.username, "newbuser")
-        self.assertEqual(new_user.email, "newbie@nb.com")
-        self.assertNotEqual(new_user.password, "noobstyle")
+        self.assertEqual(u.username, "newbuser")
+        self.assertEqual(u.email, "newbie@nb.com")
+        self.assertNotEqual(u.password, "noobstyle")
     
     def test_verify_password(self):
         """Test User verify_password method"""
