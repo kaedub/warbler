@@ -27,10 +27,10 @@ connect_db(app)
 
 ######################
 # TODO
-# - stylize flash messages on login page
+# - /like/add /like/remove to determine add or remove like
 
 ##############################################################################
-# User signup/login/logout
+# Helper functions
 
 
 @app.before_request
@@ -57,7 +57,12 @@ def do_logout():
         del session[CURR_USER_KEY]
 
 
+def get_liked_message_ids():
+    return set([msg.id for msg in g.user.messages_liked])
 
+
+##############################################################################
+# Routes for signup/login/logout
 
 @app.route('/signup', methods=["GET", "POST"])
 def signup():
@@ -124,20 +129,6 @@ def logout():
     return redirect('/login')
 
 
-def is_authorized(user_id):
-    """Check that user is authorized"""
-
-    if CURR_USER_KEY not in session:
-        flash("You must be logged in.", "warning")
-        return False
-    else:
-        if user_id == session.get(CURR_USER_KEY):
-            return True
-        else:
-            flash("You are not authorized to edit other users.", "danger")
-            return False
-
-
 ##############################################################################
 # General user routes:
 
@@ -163,7 +154,7 @@ def users_show(user_id):
     """Show user profile."""
 
     user = User.query.get_or_404(user_id)
-    return render_template('users/show.html', user=user)
+    return render_template('users/show.html', user=user, msg_ids=get_liked_message_ids())
 
 
 @app.route('/users/<int:user_id>/following')
@@ -175,7 +166,7 @@ def show_following(user_id):
         return redirect("/")
 
     user = User.query.get_or_404(user_id)
-    return render_template('users/following.html', user=user)
+    return render_template('users/following.html', user=g.user)
 
 
 @app.route('/users/<int:user_id>/followers')
@@ -186,8 +177,18 @@ def users_followers(user_id):
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
-    user = User.query.get_or_404(user_id)
-    return render_template('users/followers.html', user=user)
+    return render_template('users/followers.html', user=g.user)
+
+
+@app.route("/users/<int:user_id>/likes")
+def users_likes(user_id):
+    """Show list of messages liked by this user."""
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    return render_template('/users/likes.html', user=g.user)
 
 
 @app.route('/users/follow/<int:follow_id>', methods=['POST'])
@@ -244,7 +245,9 @@ def profile():
         user.image_url = form.data.get('image_url')
         user.header_image_url = form.data.get('header_image_url')
         user.bio = form.data.get('bio')
+
         db.session.commit()
+
         return redirect(f'/users/{user.id}')
 
     return render_template('/users/edit.html', form=form, user_id=g.user.id)
@@ -296,7 +299,7 @@ def messages_show(message_id):
     """Show a message."""
 
     msg = Message.query.get(message_id)
-    return render_template('messages/show.html', message=msg)
+    return render_template('messages/show.html', message=msg, msg_ids=get_liked_message_ids())
 
 
 @app.route('/messages/<int:message_id>/delete', methods=["POST"])
@@ -315,39 +318,27 @@ def messages_destroy(message_id):
 
 ##############################################################################
 # Handle Likes etc.
-
-@app.route('/like', methods=['POST'])
-def add_like():
-    """Adds a like to the database associated with the users id"""
-
-    if not g.user:
-        flash("Access unauthorized.", "danger")
-        return redirect("/")
-    
-    # NEED TO GET MESSAGE ID
-    message_id = request.form.get('message_id')
-    message = Message.query.get(message_id)
-    g.user.messages_liked.append(message)
-
-    db.session.commit()
-
-    return jsonify({'response': 'You liked that!'})
-
-@app.route('/like', methods=['DELETE'])
-def remove_like():
-    """Remove a like to the database associated with the users id"""
+# /like/add /like/remove to determine add or remove like
+@app.route('/like/<action>', methods=['POST'])
+def toggle_like(action):
+    """Adds or removes a like to the database associated with the users id"""
 
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
-    
-    # NEED TO GET MESSAGE ID
     message_id = request.form.get('message_id')
     message = Message.query.get(message_id)
-    g.user.messages_liked.remove(message)
+
+    if action == 'add':
+        g.user.messages_liked.append(message)
+        resp = "You liked that!"
+    else:
+        g.user.messages_liked.remove(message)
+        resp = "You unliked that!"
+
     db.session.commit()
 
-    return jsonify({'response': 'You liked that!'})
+    return jsonify({'response': resp})
 
 
 ##############################################################################
@@ -361,7 +352,7 @@ def homepage():
     - anon users: no messages
     - logged in: 100 most recent messages of followees
     """
-
+    
     if g.user:
         following_ids = [f.id for f in g.user.following] + [g.user.id]
 
@@ -372,7 +363,7 @@ def homepage():
                     .limit(100)
                     .all())
 
-        return render_template('home.html', messages=messages)
+        return render_template('home.html', messages=messages, msg_ids=get_liked_message_ids())
 
     else:
         return render_template('home-anon.html')

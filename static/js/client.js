@@ -3,24 +3,26 @@ $(document).ready(function() {
 
 
     $('#messages').on('click', 'a', function(evt) {
-        let $clicked = $(this);
+        evt.preventDefault();
+        let $clicked = $(evt.target);
 
-        let method;
+        let action;
         if (/far/.test($clicked.attr('class'))) {
-            method = 'POST';
+            action = 'add';
         } else {
-            method = 'DELETE';
+            action = 'remove';
         }
 
         $clicked.toggleClass('far fas');
-        let message_id = $(this).attr('id');
+        let message_id = $clicked.attr('data-message-id');
 
         // send request to server to like post
         $.ajax({
-            url: `${BASE_URL}/like`, 
-            method,
+            url: `${BASE_URL}/like/${action}`, 
+            method: 'post',
             data: {
-                message_id, },
+                message_id, 
+            },
             dataType: 'json',
             success: (res) => {
                 console.log('success! received response:', res);

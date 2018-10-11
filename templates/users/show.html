@@ -17,7 +17,7 @@
             <span class="text-muted">{{ message.timestamp.strftime('%d %B %Y') }}</span>
             <p>{{ message.text }}</p>
             <div class="row" id="interactions">
-              <i id="like-icon" class="far fa-star"></i>
+              <a data-message-id="{{ message.id }}" href="#" class="{% if message.id not in msg_ids %}far {% else %}fas {% endif %}fa-star"></a>
             </div>
           </div>
           

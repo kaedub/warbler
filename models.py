@@ -118,6 +118,11 @@ class User(db.Model):
 
         return bool(self.following.filter_by(id=other_user.id).first())
 
+    # this will run a sql query with each call
+    # use a count query instead
+    def get_number_of_likes(self):
+        return len(self.messages_liked)
+
     @classmethod
     def signup(cls, username, email, password, image_url):
         """Sign up user.

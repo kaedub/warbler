@@ -1,0 +1,32 @@
+{% extends '/users/detail.html' %}
+
+{% block user_details %}
+<div class="col-sm-6">
+        <ul class="list-group" id="messages">
+            <li class="list-group-item">
+                <h5>Likes</h5>
+            </li>
+    
+          {% for msg in user.messages_liked %}
+            <li class="list-group-item">
+                <a href="/messages/{{ msg.id  }}" class="message-link"></a>
+
+                <a href="/users/{{ msg.user.id }}">
+                    <img src="{{ msg.user.image_url }}" alt="" class="timeline-image">
+                </a>
+
+                <div class="message-area">
+                    <a href="/users/{{ msg.user.id }}">@{{ msg.user.username }}</a>
+                    <span class="text-muted">{{ msg.timestamp.strftime('%d %B %Y') }}</span>
+                    <p>{{ msg.text }}</p>
+                    <div class="row" id="interactions">
+                    <a data-message-id="{{msg.id}}" href="#" class="{% if msg not in g.user.messages_liked %}far {% else %}fas {% endif %}fa-star"></a>
+                    </div>
+                </div>
+            </li>
+    
+          {% endfor %}
+    
+        </ul>
+      </div>
+{% endblock %}
