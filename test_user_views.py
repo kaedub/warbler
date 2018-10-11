@@ -23,4 +23,47 @@ class UserViewTestCase(TestCase):
         Message.query.delete()
         FollowersFollowee.query.delete()
 
+        db.session.commit()
+
         self.client = app.test_client()
+
+    def test_list_users(self):
+        with self.client as c:
+            resp = c.get('/users')
+
+            
+
+    def test_users_show(self):
+        pass
+
+    def test_show_following(self):
+        pass
+
+    def test_users_followers(self):
+        pass
+
+    def users_likes(self):
+        pass
+
+    def test_add_follow(self):
+        pass
+
+    def test_stop_following(self):
+        pass
+
+    def test_profile(self):
+        pass
+
+    def test_delete_user(self):
+        pass
+
+    # def test_signup(self):
+    #     pass
+
+    # def test_login(self):
+    #     pass
+
+    # def test_logout(self):
+    #     pass
+
+    
