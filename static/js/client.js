@@ -1,7 +1,4 @@
 $(document).ready(function() {
-    const BASE_URL = 'http://localhost:5000';
-
-
     $('#messages').on('click', 'a', function(evt) {
         evt.preventDefault();
         let $clicked = $(evt.target);
@@ -18,7 +15,7 @@ $(document).ready(function() {
 
         // send request to server to like post
         $.ajax({
-            url: `${BASE_URL}/like/${action}`, 
+            url: `/like/${action}`, 
             method: 'post',
             data: {
                 message_id, 

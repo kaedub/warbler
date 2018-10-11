@@ -26,6 +26,7 @@ class FollowersFollowee(db.Model):
         primary_key=True,
     )
 
+
 class Like(db.Model):
     """Represents likes by connecting a user to a message that they liked"""
 
@@ -68,7 +69,7 @@ class User(db.Model):
 
     image_url = db.Column(
         db.Text,
-        default="/static/images/default-pic.png",
+        default= "/static/images/default-pic.png",
     )
 
     header_image_url = db.Column(
@@ -106,7 +107,8 @@ class User(db.Model):
         backref="who_liked")
 
     def __repr__(self):
-        return f"<User #{self.id}: {self.username}, {self.email}>"
+        return f"<User id:{self.id}, username:{self.username}, email:{self.email}>"
+
 
     def is_followed_by(self, other_user):
         """Is this user followed by `other_user`?"""
@@ -122,10 +124,11 @@ class User(db.Model):
     # use a count query instead
     def get_number_of_likes(self):
         """Return the number of messages this user has liked."""
+        
         return len(self.messages_liked)
 
     @classmethod
-    def signup(cls, username, email, password, image_url):
+    def signup(cls, username, email, password, image_url=None):
         """Sign up user.
 
         Hashes password and adds user to system.
@@ -143,6 +146,12 @@ class User(db.Model):
         db.session.add(user)
         return user
 
+
+    def verify_password(self, password):
+        """Verify that the user-entered password against the hashed password"""
+        return bcrypt.check_password_hash(self.password, password)
+
+
     @classmethod
     def authenticate(cls, username, password):
         """Find user with `username` and `password`.
@@ -156,11 +165,8 @@ class User(db.Model):
 
         user = cls.query.filter_by(username=username.lower()).first()
 
-        if user:
-            is_auth = bcrypt.check_password_hash(user.password, password)
-            if is_auth:
-                return user
-
+        if user and user.verify_password(password=password):
+            return user
         return False
 
 
