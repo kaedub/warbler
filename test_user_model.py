@@ -39,6 +39,8 @@ class UserModelTestCase(TestCase):
         Message.query.delete()
         FollowersFollowee.query.delete()
 
+        db.session.commit()
+
         #########################################
         # What is the app test client needed for?
         # self.client = app.test_client()
@@ -49,6 +51,8 @@ class UserModelTestCase(TestCase):
         User.query.delete()
         Message.query.delete()
         FollowersFollowee.query.delete()
+
+        db.session.commit()
     
     def test_user_model(self):
         """Does basic model work?"""
