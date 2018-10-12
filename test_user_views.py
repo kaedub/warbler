@@ -370,7 +370,7 @@ class UserViewTestCase(TestCase):
             edward = User.query.get(1)
 
             # Make sure it redirects
-            self.assertEqual(resp.status_code, 200)
+            self.assertEqual(resp.status_code, 302)
             # import pdb; pdb.set_trace()
             # Make sure Edward is a follower of Juan
             # Assert that Edwars is IN Juan's followers
