@@ -31,30 +31,22 @@ class UserViewTestCase(TestCase):
         """Test that /user route correctly shows searched users"""
 
         edward = User(
-            id=1,
             email="ed@test.com",
             username="edward",
             password="HASHED_PASSWORD"
         )
 
         juan = User(
-            id=2,
             email="juanton@test.com",
             username="juan",
             password="HASHED_PASSWORD"
         )
 
-        db.session.add(edward)
-        db.session.add(juan)
+        db.session.add_all([edward, juan])
         db.session.commit()
 
-        # SHOULD WE REMOVE THIS SINCE THIS IS TESTING THE USER MODEL
-        # AND DATABASE MORE THAN THE VIEW FUNCTION?
-        user_edward = User.query.get(1)
-        user_juan = User.query.get(2)
-
-        self.assertIsInstance(user_edward, User)
-        self.assertIsInstance(user_juan, User)
+        self.assertIsInstance(edward, User)
+        self.assertIsInstance(juan, User)
 
         with self.client as c:
             resp = c.get('/users')
@@ -73,7 +65,6 @@ class UserViewTestCase(TestCase):
         """Test that /user/user_id shows that users profile"""
 
         edward = User(
-            id=1,
             email="ed@test.com",
             username="edward",
             password="HASHED_PASSWORD",
@@ -81,16 +72,19 @@ class UserViewTestCase(TestCase):
         )
 
         juan = User(
-            id=2,
             email="juanton@test.com",
             username="juan",
             password="HASHED_PASSWORD",
             location="New York"
         )
 
-        db.session.add(edward)
-        db.session.add(juan)
+        db.session.add_all([edward, juan])
         db.session.commit()
+
+        user_ids = {
+            'edward': edward.id,
+            'juan': juan.id,
+        }
 
         # LETS SEE IF EDWARD FOLLOWS JUAN THAT FOLLOW/UNFOLLOW
         # BUTTON IS RIGHT
@@ -101,10 +95,10 @@ class UserViewTestCase(TestCase):
 
             # Let's make sure our session knows we are test user "edward"
             with c.session_transaction() as sess:
-                sess[CURR_USER_KEY] = 1
+                sess[CURR_USER_KEY] = user_ids['edward']
 
             # Get edward's user detail page as edward
-            resp = c.get('/users/1')
+            resp = c.get(f'/users/{user_ids["edward"]}')
             
             self.assertEqual(resp.status_code, 200)
             self.assertIn(b'@edward', resp.data)
@@ -114,7 +108,7 @@ class UserViewTestCase(TestCase):
             self.assertNotIn(b'New York', resp.data)
 
             # Get juan's user detail page as edward
-            resp = c.get('/users/2')
+            resp = c.get(f'/users/{user_ids["juan"]}')
             
             self.assertEqual(resp.status_code, 200)
             self.assertIn(b'@juan', resp.data)
@@ -128,7 +122,6 @@ class UserViewTestCase(TestCase):
         """Test /users/user_id/following route shows who user is following"""
 
         edward = User(
-            id=1,
             email="ed@test.com",
             username="edward",
             password="HASHED_PASSWORD",
@@ -136,7 +129,6 @@ class UserViewTestCase(TestCase):
         )
 
         juan = User(
-            id=2,
             email="juanton@test.com",
             username="juan",
             password="HASHED_PASSWORD",
@@ -144,17 +136,20 @@ class UserViewTestCase(TestCase):
         )
 
         timmy = User(
-            id=3,
             email="tim@test.com",
             username="timmy",
             password="HASHED_PASSWORD",
             location="Antarctica"
         )        
 
-        db.session.add(edward)
-        db.session.add(juan)
-        db.session.add(timmy)
+        db.session.add_all([edward, juan, timmy])
         db.session.commit()
+
+        user_ids = {
+            'edward': edward.id,
+            'juan': juan.id,
+            'timmy': timmy.id
+        }
 
         # LETS SEE IF EDWARD FOLLOWS JUAN THAT FOLLOW/UNFOLLOW
         # BUTTON IS RIGHT
@@ -165,10 +160,10 @@ class UserViewTestCase(TestCase):
 
             # Let's make sure our session knows we are test user "edward"
             with c.session_transaction() as sess:
-                sess[CURR_USER_KEY] = 1
+                sess[CURR_USER_KEY] = user_ids['edward']
 
             # View who edward is following
-            resp = c.get('/users/1/following')
+            resp = c.get(f'/users/{user_ids["edward"]}/following')
             
             self.assertEqual(resp.status_code, 200)
 
@@ -186,7 +181,6 @@ class UserViewTestCase(TestCase):
         """Test /users/user_id/followers route show who is following user"""
 
         edward = User(
-            id=1,
             email="ed@test.com",
             username="edward",
             password="HASHED_PASSWORD",
@@ -194,7 +188,6 @@ class UserViewTestCase(TestCase):
         )
 
         juan = User(
-            id=2,
             email="juanton@test.com",
             username="juan",
             password="HASHED_PASSWORD",
@@ -202,29 +195,30 @@ class UserViewTestCase(TestCase):
         )
 
         timmy = User(
-            id=3,
             email="tim@test.com",
             username="timmy",
             password="HASHED_PASSWORD",
             location="Antarctica"
-        )        
+        )     
 
-        db.session.add(edward)
-        db.session.add(juan)
-        db.session.add(timmy)
-        db.session.commit()
+        db.session.add_all([edward, juan, timmy])
 
         timmy.following.append(edward)
         db.session.commit()
+
+        user_ids = {
+            'edward': edward.id,
+            'juan': juan.id,
+            'timmy': timmy.id
+        }
 
         with self.client as c:
 
             # Let's make sure our session knows we are test user "edward"
             with c.session_transaction() as sess:
-                sess[CURR_USER_KEY] = 1
-
+                sess[CURR_USER_KEY] = user_ids['edward']
             # View edwards followers
-            resp = c.get('/users/1/followers')
+            resp = c.get(f'/users/{user_ids["edward"]}/followers')
             
             self.assertEqual(resp.status_code, 200)
 
@@ -241,7 +235,6 @@ class UserViewTestCase(TestCase):
         """Test the /users/user_id/likes page"""
 
         edward = User(
-            id=1,
             email="ed@test.com",
             username="edward",
             password="HASHED_PASSWORD",
@@ -249,7 +242,6 @@ class UserViewTestCase(TestCase):
         )
 
         juan = User(
-            id=2,
             email="juanton@test.com",
             username="juan",
             password="HASHED_PASSWORD",
@@ -257,42 +249,42 @@ class UserViewTestCase(TestCase):
         )
 
         timmy = User(
-            id=3,
             email="tim@test.com",
             username="timmy",
             password="HASHED_PASSWORD",
             location="Antarctica"
         )
 
-        db.session.add(edward)
-        db.session.add(juan)
-        db.session.add(timmy)
+        db.session.add_all([edward, juan, timmy])
         db.session.commit()
+
+        user_ids = {
+            'edward': edward.id,
+            'juan': juan.id,
+            'timmy': timmy.id
+        }
 
         # POSTED BY EDWARD
         edwards_message = Message(
-            id=1,
             text="test message 1",
-            user_id=1
+            user_id=user_ids['edward']
         )
 
         # POSTED BY TIMMY
         timmys_message = Message(
-            id=2,
             text="test message 2",
-            user_id=3
+            user_id=user_ids['timmy']
         )
 
-        db.session.add(edwards_message)
-        db.session.add(timmys_message)
+        db.session.add_all([edwards_message, timmys_message])
         db.session.commit()
 
         # LETS LIKE SOME THINGS
         # EDWARD LIKES TIMMYS POST
-        edward.messages_liked.append(Message.query.get(2))
+        edward.messages_liked.append(Message.query.get(timmys_message.id))
 
         # JUAN LIKES EDWARDS POST
-        juan.messages_liked.append(Message.query.get(1))
+        juan.messages_liked.append(Message.query.get(edwards_message.id))
 
         db.session.commit()
 
@@ -300,10 +292,10 @@ class UserViewTestCase(TestCase):
 
             # Let's make sure our session knows we are test user "edward"
             with c.session_transaction() as sess:
-                sess[CURR_USER_KEY] = 1
+                sess[CURR_USER_KEY] = user_ids['edward']
 
             # View edwards followers
-            resp = c.get('/users/1/likes')
+            resp = c.get(f'/users/{user_ids["edward"]}/likes')
             
             self.assertEqual(resp.status_code, 200)
 
@@ -339,9 +331,7 @@ class UserViewTestCase(TestCase):
             location="Antarctica"
         )
 
-        db.session.add(edward)
-        db.session.add(juan)
-        db.session.add(timmy)
+        db.session.add_all([edward, juan, timmy])
         db.session.commit()
 
         user_ids = {
@@ -357,10 +347,10 @@ class UserViewTestCase(TestCase):
             # Let's make sure our session knows we are test user "edward"
             # Edward is the current logged in user
             with c.session_transaction() as sess:
-                sess[CURR_USER_KEY] = 1
+                sess[CURR_USER_KEY] = user_ids['edward']
 
             # Tell server to have Edward follow Juan
-            resp = c.post('/users/follow/2', data={"text": "Hello"})
+            resp = c.post(f'/users/follow/{user_ids["juan"]}', data={"text": "Hello"})
 
 
             # We have to re-grab juan and edward user instances
