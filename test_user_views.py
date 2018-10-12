@@ -319,7 +319,6 @@ class UserViewTestCase(TestCase):
         """Test the /users/follow/user_id page"""
 
         edward = User(
-            id=1,
             email="ed@test.com",
             username="edward",
             password="HASHED_PASSWORD",
@@ -327,7 +326,6 @@ class UserViewTestCase(TestCase):
         )
 
         juan = User(
-            id=2,
             email="juanton@test.com",
             username="juan",
             password="HASHED_PASSWORD",
@@ -335,7 +333,6 @@ class UserViewTestCase(TestCase):
         )
 
         timmy = User(
-            id=3,
             email="tim@test.com",
             username="timmy",
             password="HASHED_PASSWORD",
@@ -347,9 +344,11 @@ class UserViewTestCase(TestCase):
         db.session.add(timmy)
         db.session.commit()
 
-        # Edward is following Juan
-        # Set Juan's user id to followee_id
-        followee_id = 2
+        user_ids = {
+            'edward': edward.id,
+            'juan': juan.id,
+            'timmy': timmy.id
+        }
 
         db.session.commit()
 
@@ -364,10 +363,11 @@ class UserViewTestCase(TestCase):
             resp = c.post('/users/follow/2', data={"text": "Hello"})
 
 
-            # Why do we need to redefine juan and edward from the database?
-            # this will not work outside the with block
-            juan = User.query.get(2)
-            edward = User.query.get(1)
+            # We have to re-grab juan and edward user instances
+            # because sqlalchemy gets rid of them when we initiate
+            # a new application context
+            juan = User.query.get(user_ids['juan'])
+            edward = User.query.get(user_ids['edward'])
 
             # Make sure it redirects
             self.assertEqual(resp.status_code, 302)
