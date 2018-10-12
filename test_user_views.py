@@ -316,7 +316,67 @@ class UserViewTestCase(TestCase):
             self.assertNotIn(b'class="far fa-star', resp.data)
 
     def test_add_follow(self):
-        pass
+        """Test the /users/follow/user_id page"""
+
+        edward = User(
+            id=1,
+            email="ed@test.com",
+            username="edward",
+            password="HASHED_PASSWORD",
+            location="Oakland"
+        )
+
+        juan = User(
+            id=2,
+            email="juanton@test.com",
+            username="juan",
+            password="HASHED_PASSWORD",
+            location="New York"
+        )
+
+        timmy = User(
+            id=3,
+            email="tim@test.com",
+            username="timmy",
+            password="HASHED_PASSWORD",
+            location="Antarctica"
+        )
+
+        db.session.add(edward)
+        db.session.add(juan)
+        db.session.add(timmy)
+        db.session.commit()
+
+        # Edward is following Juan
+        # Set Juan's user id to followee_id
+        followee_id = 2
+
+        db.session.commit()
+
+        with self.client as c:
+
+            # Let's make sure our session knows we are test user "edward"
+            # Edward is the current logged in user
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = 1
+
+            # Tell server to have Edward follow Juan
+            resp = c.post('/users/follow/2', data={"text": "Hello"})
+
+
+            # Why do we need to redefine juan and edward from the database?
+            # this will not work outside the with block
+            juan = User.query.get(2)
+            edward = User.query.get(1)
+
+            # Make sure it redirects
+            self.assertEqual(resp.status_code, 200)
+            # import pdb; pdb.set_trace()
+            # Make sure Edward is a follower of Juan
+            # Assert that Edwars is IN Juan's followers
+            self.assertIn(edward, juan.followers)
+
+
 
     def test_stop_following(self):
         pass
